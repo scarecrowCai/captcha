@@ -19,9 +19,18 @@ public class CaptchaGenerator {
 			99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
 			121, 122 };
 
-	private static Random random = new Random();
+	private static final Random random = new Random();
 
-	public static String getCatpha(int size, CaptchaValueType type, int number, int total) {
+	/**
+	 * get Captcha
+	 * 
+	 * @param size
+	 *            : captcha size
+	 * @param type
+	 *            : captcha type
+	 * @return
+	 */
+	public static String getCatpha(int size, CaptchaValueType type) {
 		char[] chars = getTpye(type);
 		Integer[] offsets = new Integer[size];
 		for (int i = 0; i < offsets.length; i++) {
@@ -30,37 +39,66 @@ public class CaptchaGenerator {
 		return generaterCode(offsets, chars);
 	}
 
-	public static List<String> getCapthas(int size, CaptchaValueType type, int number, int total) {
-		List<String> result = new ArrayList<String>();
+	/**
+	 * get Captcha list
+	 * 
+	 * @param size
+	 *            : captcha length
+	 * @param type
+	 *            : captcha type
+	 * @param number
+	 *            : batch generate quantity
+	 * @param total
+	 *            : total quantity
+	 * @return
+	 */
+	public static List<String> getCapthas(int length, CaptchaValueType type, int number, int total) {
+		List<String> result = new ArrayList<String>(number);
 		char[] chars = getTpye(type);
-		int maxStep = getMaxStep(type, size, total);
-		Integer[] offsets = new Integer[size];
+		int maxStep = getMaxStep(chars.length, length, total);
+		Integer[] offsets = new Integer[length];
 		for (int i = 0; i < offsets.length; i++) {
 			offsets[i] = random.nextInt(chars.length);
 		}
+		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < number; i++) {
 			updateOffsets(offsets, chars.length, maxStep);
-			StringBuilder msb = new StringBuilder();
-			for (int j = 0; j < size; j++) {
-				msb.append(chars[offsets[j]]);
+			sb.setLength(0);
+			for (int j = 0; j < length; j++) {
+				sb.append(chars[offsets[j]]);
 			}
-			result.add(msb.toString());
+			result.add(sb.toString());
 		}
 		return result;
 	}
 
-	public static List<String> getCapthas(int size, CaptchaValueType type, int number, int total, String beginCode) {
-		List<String> result = new ArrayList<String>();
+	/**
+	 * get Captcha list with begin captcha code
+	 * 
+	 * @param beginCode
+	 *            : begin captcha code
+	 * @param type
+	 *            : captcha type
+	 * @param number
+	 *            : batch generate quantity
+	 * @param total
+	 *            : total quantity
+	 * 
+	 * @return
+	 */
+	public static List<String> getCapthas(String beginCode, CaptchaValueType type, int number, int total) {
+		List<String> result = new ArrayList<String>(number);
 		char[] chars = getTpye(type);
-		int maxStep = getMaxStep(type, size, total);
+		int maxStep = getMaxStep(chars.length, beginCode.length(), total);
 		Integer[] offsets = transferToOffset(beginCode, type);
-		for (int i = 0; i < 100; i++) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < number; i++) {
 			updateOffsets(offsets, chars.length, maxStep);
-			StringBuilder msb = new StringBuilder();
+			sb.setLength(0);
 			for (int j = 0; j < offsets.length; j++) {
-				msb.append(chars[offsets[j]]);
+				sb.append(chars[offsets[j]]);
 			}
-			result.add(msb.toString());
+			result.add(sb.toString());
 		}
 		return result;
 	}
@@ -69,6 +107,13 @@ public class CaptchaGenerator {
 		updateFromLastPosition(offsets, length, maxStep);
 	}
 
+	/**
+	 * circulatory carry bit until not-carry
+	 * 
+	 * @param offsets
+	 * @param length
+	 * @param maxStep
+	 */
 	private static void updateFromLastPosition(Integer[] offsets, int length, int maxStep) {
 		int offset = random.nextInt(maxStep) + 1;
 		int divisor = (offset + offsets[offsets.length - 1]) / length;
@@ -80,6 +125,8 @@ public class CaptchaGenerator {
 			}
 			if (i == n) {
 				offsets[offsets.length - i] = (offsets[offsets.length - i] + divisor) % length;
+				divisor = (offsets[offsets.length - i] + divisor) / length;
+				i = 0;
 			}
 			remainder = (offsets[offsets.length - i - 1] + divisor) % length;
 			divisor = (offsets[offsets.length - i - 1] + divisor) / length;
@@ -123,15 +170,14 @@ public class CaptchaGenerator {
 		return offset;
 	}
 
-	private static int getMaxStep(CaptchaValueType type, int size, int total) {
+	private static int getMaxStep(int length, int size, int total) {
 		long maxValue = 1;
-		long length = type.getLength();
 		for (int i = 0; i < size; i++) {
-			maxValue = maxValue * length;
+			maxValue = maxValue * Long.valueOf(length);
 		}
-		int maxStep = (int) maxValue / total;
-		// maxStep==0 exception
-		return maxStep == 0 ? 1 : maxStep;
+		int maxStep = (int) (maxValue / total < 0 || maxValue / total >= Integer.MAX_VALUE ? Integer.MAX_VALUE
+				: maxValue / total);
+		return maxStep == 0 ? 1 : maxStep > Integer.MAX_VALUE - length ? Integer.MAX_VALUE - length : maxStep;
 	}
 
 	private static Integer calcIndexOfType(char code, char[] chars) {
@@ -140,7 +186,8 @@ public class CaptchaGenerator {
 				return i;
 			}
 		}
-		// not find in char[] exception
+		// throw not find in char[] exception
 		return -1;
 	}
+
 }

@@ -1,46 +1,47 @@
 package com.scarecrow.cai.metadata;
 
 public enum CaptchaValueType {
-	CHARACTER_AND_DIGIT(0, 62), CHARACTER(1, 52), DIGIT(2, 10);
+	CHARACTER_AND_DIGIT("1000", "character and digit"), CHARACTER("2000", "character only"), DIGIT("3000",
+			"digit only");
 
-	private int type = 0;
-	private int length = 0;
+	private String code;;
+	private String name;
 
-	private CaptchaValueType(int type, int length) {
-		this.type = type;
-		this.length = length;
+	private CaptchaValueType(String code, String name) {
+		this.code = code;
+		this.name = name;
 	}
 
-	public int getType() {
-		return type;
+	public String getCode() {
+		return code;
 	}
 
-	public int getLength() {
-		return length;
+	public String getName() {
+		return name;
 	}
 
-	public boolean isCharacterAndDigit(int type) {
-		return type == CHARACTER_AND_DIGIT.getType();
+	public boolean isCharacterAndDigit(String code) {
+		return code == CHARACTER_AND_DIGIT.getCode();
 	}
 
-	public boolean isCharacter(int type) {
-		return type == CHARACTER.getType();
+	public boolean isCharacter(String code) {
+		return code == CHARACTER.getCode();
 	}
 
-	public boolean isDigit(int type) {
-		return type == DIGIT.getType();
+	public boolean isDigit(String code) {
+		return code == DIGIT.getCode();
 	}
 
-	public static CaptchaValueType valueOf(int type) {
-		switch (type) {
-		case 0:
+	public static CaptchaValueType typeOf(String code) {
+		switch (code) {
+		case "1000":
 			return CHARACTER_AND_DIGIT;
-		case 1:
+		case "2000":
 			return CHARACTER;
-		case 2:
+		case "3000":
 			return DIGIT;
 		default:
-			return CHARACTER_AND_DIGIT;
+			return null;
 		}
 	}
 }
